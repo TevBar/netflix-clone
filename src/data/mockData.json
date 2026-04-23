@@ -1,0 +1,170 @@
+{
+  "movies": [
+    {
+      "id": 1,
+      "title": "The Dark Knight",
+      "poster_path": "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+      "backdrop_path": "/hqkIcbrOHL86UncnHIsHVcVmzue.jpg",
+      "overview": "Batman faces the Joker in this dark and gritty superhero masterpiece.",
+      "release_date": "2008-07-18",
+      "vote_average": 9.0
+    },
+    {
+      "id": 2,
+      "title": "Inception",
+      "poster_path": "/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg",
+      "backdrop_path": "/s2bT29y0ngXxxu2IA8AOzzXTRhd.jpg",
+      "overview": "A thief enters people's dreams to steal their secrets.",
+      "release_date": "2010-07-16",
+      "vote_average": 8.8
+    },
+    {
+      "id": 3,
+      "title": "Interstellar",
+      "poster_path": "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+      "backdrop_path": "/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
+      "overview": "A team of explorers travel through a wormhole in space.",
+      "release_date": "2014-11-07",
+      "vote_average": 8.6
+    },
+    {
+      "id": 4,
+      "title": "Spider-Man: No Way Home",
+      "poster_path": "/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
+      "backdrop_path": "/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg",
+      "overview": "Spider-Man seeks help from Doctor Strange to forget his revealed identity.",
+      "release_date": "2021-12-17",
+      "vote_average": 8.4
+    },
+    {
+      "id": 5,
+      "title": "Avatar: The Way of Water",
+      "poster_path": "/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg",
+      "backdrop_path": "/s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg",
+      "overview": "Jake Sully lives with his newfound family on Pandora.",
+      "release_date": "2022-12-16",
+      "vote_average": 7.6
+    },
+    {
+      "id": 6,
+      "title": "Dune",
+      "poster_path": "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+      "backdrop_path": "/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg",
+      "overview": "Paul Atreides unites with Chani and the Fremen while on a path of revenge.",
+      "release_date": "2021-10-22",
+      "vote_average": 8.0
+    },
+    {
+      "id": 7,
+      "title": "Black Panther: Wakanda Forever",
+      "poster_path": "/pFlaoHTZeyNkG83vxsAJiGzfSsa.jpg",
+      "overview": "The people of Wakanda fight to protect their home from intervening world powers.",
+      "release_date": "2022-11-11",
+      "vote_average": 7.3
+    },
+    {
+      "id": 8,
+      "title": "Top Gun: Maverick",
+      "poster_path": "/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+      "overview": "Maverick trains a new generation of Top Gun pilots.",
+      "release_date": "2022-05-27",
+      "vote_average": 8.3
+    },
+    {
+      "id": 9,
+      "title": "Oppenheimer",
+      "poster_path": "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+      "overview": "The story of American scientist J. Robert Oppenheimer.",
+      "release_date": "2023-07-21",
+      "vote_average": 8.3
+    },
+    {
+      "id": 10,
+      "title": "Avengers: Endgame",
+      "poster_path": "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+      "overview": "The Avengers assemble one final time to defeat Thanos.",
+      "release_date": "2019-04-26",
+      "vote_average": 8.4
+    },
+    {
+      "id": 11,
+      "title": "The Batman",
+      "poster_path": "/b0PlSFdDwbyK0cf5RxwDpaOJQvQ.jpg",
+      "overview": "Batman ventures into Gotham City's underworld.",
+      "release_date": "2022-03-04",
+      "vote_average": 7.8
+    },
+    {
+      "id": 12,
+      "title": "Stranger Things",
+      "poster_path": "/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+      "overview": "Kids in a small town uncover supernatural mysteries.",
+      "release_date": "2016-07-15",
+      "vote_average": 8.7
+    },
+    {
+      "id": 13,
+      "title": "Wednesday",
+      "poster_path": "/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",
+      "overview": "Wednesday Addams navigates life at Nevermore Academy.",
+      "release_date": "2022-11-23",
+      "vote_average": 8.5
+    },
+    {
+      "id": 14,
+      "title": "The Witcher",
+      "poster_path": "/cZ0d3rtvXPVvuiX22sP79K3Hmjz.jpg",
+      "overview": "Geralt of Rivia, a monster hunter, searches for his destiny.",
+      "release_date": "2019-12-20",
+      "vote_average": 8.2
+    },
+    {
+      "id": 15,
+      "title": "House of the Dragon",
+      "poster_path": "/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg",
+      "overview": "The Targaryen civil war begins 200 years before Game of Thrones.",
+      "release_date": "2022-08-21",
+      "vote_average": 8.4
+    },
+    {
+      "id": 16,
+      "title": "Breaking Bad",
+      "poster_path": "/3xnWaLQjelJDDF7LT1WBo6f4BRe.jpg",
+      "overview": "A chemistry teacher turns to making drugs after a cancer diagnosis.",
+      "release_date": "2008-01-20",
+      "vote_average": 9.5
+    },
+    {
+      "id": 17,
+      "title": "Money Heist",
+      "poster_path": "/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",
+      "overview": "A criminal mastermind plans the perfect heist at the Royal Mint.",
+      "release_date": "2017-05-02",
+      "vote_average": 8.2
+    },
+    {
+      "id": 18,
+      "title": "Squid Game",
+      "poster_path": "/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg",
+      "overview": "People in debt compete in deadly games for a cash prize.",
+      "release_date": "2021-09-17",
+      "vote_average": 8.0
+    },
+    {
+      "id": 19,
+      "title": "Ozark",
+      "poster_path": "/m73QiCVGg14SpwZCSbSmiHm6Ckg.jpg",
+      "overview": "A financial advisor launders money for a Mexican cartel.",
+      "release_date": "2017-07-21",
+      "vote_average": 8.4
+    },
+    {
+      "id": 20,
+      "title": "The Crown",
+      "poster_path": "/1M876KQUEYXmQa2HKgwSxJkZSM4.jpg",
+      "overview": "The reign of Queen Elizabeth II from 1947 to the present day.",
+      "release_date": "2016-11-04",
+      "vote_average": 8.7
+    }
+  ]
+}

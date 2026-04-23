@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variables (contains API keys)
+.env
+.env.local
+.env.development
+.env.production
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Development notes (personal learning materials)
+development-notes/
+
+# Educational documentation (keep in version control)
+# TYPESCRIPT_TYPES_GUIDE.md should be tracked for team learning
+
+# Debug and study guides (personal use)
+HERO_IMAGE_DEBUG_GUIDE.md
+*_DEBUG_GUIDE.md
+*_STUDY_NOTES.md
