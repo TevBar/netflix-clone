@@ -50,7 +50,7 @@ export default function BrowsePage() {
                     category="now-playing"
                     title="Now Playing"
                 />
-
+            </div>
             </div>
         </div>
     )

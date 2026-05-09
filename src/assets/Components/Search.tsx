@@ -1,48 +1,59 @@
 import { Search as SearchIcon } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import mockData from '../../data/mockData.json';
 import { useNavigate } from '@tanstack/react-router'
+import { addSearch, getRecentSearches } from '../../lib/searchHistory';
+import type { SearchEntry } from '../../lib/searchHistory';
+import { tmdbApi } from '@/services/tmdbApi';
 
 // Movie type for search results
 interface Movie {
   id: number;
   title: string;
-  poster_path: string;
+  poster_path: string | null;
   overview: string;
   release_date: string;
   vote_average: number;
 }
 
 // Use movies from our JSON file instead of hardcoded array
-const SAMPLE_MOVIES: Movie[] = mockData.movies;
+// NOTE: Now using TMDB API for live suggestions instead
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
+  const [recentSearches, setRecentSearches] = useState<SearchEntry[]>(() => {
+    try {
+      return getRecentSearches();
+    } catch {
+      return [];
+    }
+  });
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate()
+
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
 
   const handleIconClick = () => {
     setIsSearchOpen(!isSearchOpen);
   };
 
-  // Search filter function
-  const filterMovies = (query: string) => {
-    if (!query.trim()) return []; // Empty search = no results
-    
-    return SAMPLE_MOVIES.filter(movie => 
-      movie.title.toLowerCase().includes(query.toLowerCase()) ||
-      movie.overview.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, 5); // Limit to 5 results for performance
-  };
-
-  // Debounced search effect - waits 300ms after user stops typing
+  // Real API search - calls TMDB instead of filtering mock data
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (searchTerm.trim()) {
-        const results = filterMovies(searchTerm);
-        setSearchResults(results);
+        setIsLoadingSearch(true);
+        try {
+          // Call the real TMDB API
+          const result = await tmdbApi.searchMovies(searchTerm, 1);
+          // Limit to 5 results for the dropdown
+          setSearchResults(result.movies.slice(0, 5));
+        } catch (error) {
+          console.error('Search API error:', error);
+          setSearchResults([]);
+        } finally {
+          setIsLoadingSearch(false);
+        }
       } else {
         setSearchResults([]);
       }
@@ -105,6 +116,19 @@ const Search = () => {
             setSearchTerm(value);
             // Search will be triggered by useEffect after 300ms delay
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const q = searchTerm.trim();
+              if (q) {
+                addSearch(q);
+                setRecentSearches(getRecentSearches());
+                navigate({ to: '/search', search: { q } });
+                setIsSearchOpen(false);
+                setSearchTerm('');
+                setSearchResults([]);
+              }
+            }
+          }}
           className={`bg-black/40 border-2 rounded-full py-2 px-4 text-white placeholder-gray-400 focus:outline-none transition-all duration-300 w-48 ${
             isSearchOpen 
               ? 'border-red-500 shadow-red-500/50 shadow-lg focus:border-red-400 focus:shadow-red-400/60' 
@@ -119,6 +143,37 @@ const Search = () => {
         />
       </div>
       
+      {/* Recent searches (when no query) */}
+      {isSearchOpen && !searchTerm && recentSearches.length > 0 && (
+        <div className="absolute top-full left-0 mt-2 w-96 bg-black/95 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-700 p-2 z-50">
+          <div className="text-gray-400 text-sm px-2 py-1">Recent searches</div>
+          {recentSearches.map(r => (
+            <button
+              key={r.q}
+              className="flex items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-800 rounded"
+              onClick={() => {
+                addSearch(r.q);
+                setRecentSearches(getRecentSearches());
+                navigate({ to: '/search', search: { q: r.q } });
+                setIsSearchOpen(false);
+                setSearchTerm('');
+                setSearchResults([]);
+              }}
+            >
+              <span>{r.q}</span>
+              <span className="text-xs text-gray-500">{r.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isSearchOpen && searchTerm && isLoadingSearch && (
+        <div className="absolute top-full left-0 mt-2 w-96 bg-black/95 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-700 p-4 z-50">
+          <p className="text-gray-400 text-sm text-center">Loading suggestions...</p>
+        </div>
+      )}
+
       {/* Search Results Dropdown */}
       {isSearchOpen && searchTerm && searchResults.length > 0 && (
         <div 
@@ -133,6 +188,8 @@ const Search = () => {
               className="flex items-center gap-3 p-3 hover:bg-gray-800/50 cursor-pointer border-b border-gray-700/50 last:border-b-0 transition-colors"
               onClick={() => {
                 // Navigate to search results page with the movie title as query
+                addSearch(movie.title);
+                setRecentSearches(getRecentSearches());
                 navigate({ 
                     to: '/search', 
                     search: { q: movie.title } 

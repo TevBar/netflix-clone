@@ -35,6 +35,73 @@ interface TMDBGenresResponse {
   genres: TMDBGenre[];
 }
 
+// these go right after TMDBGenresResponse 
+
+interface TMDBCastMember { 
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+interface TMDBCrewMember { 
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+}
+
+interface TMDBCredits { 
+  cast: TMDBCastMember[];
+  crew: TMDBCrewMember[];
+}
+
+interface TMDBVideo { 
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+}
+
+interface TMDBVideos { 
+  results: TMDBVideo[];
+}
+
+interface TMDBProductionCompany { 
+  id: number;
+  name: string;
+  logo_path: string | null;
+  origin_country: string;
+}
+
+interface TMDBMovieDetails extends TMDBMovie { 
+  genres: TMDBGenre[];
+  runtime: number;
+  budget: number;
+  revenue: number;
+  production_companies: TMDBProductionCompany[];
+  credits: TMDBCredits;
+  videos: TMDBVideos;
+}
+
+interface MovieDetails extends Movie { 
+  genres: Genre[];
+  runtime: number;
+  budget: number;
+  revenue: number;
+  production_companies: Array<{ name: string; logo_path: string | null }>;
+  credits: { 
+    cast: Array<{ name: string; character: string; profile_path: string | null }>; 
+    crew: Array<{ id: number; name: string; job: string; department: string; }>
+  };
+  videos: {
+    results: Array<{ id: string; key: string; name: string; site: string; type: string; }>
+  };
+}
+
+export type { MovieDetails, TMDBVideos };
+
 // Custom Error Classes
 export class TMDBApiError extends Error {
   public status?: number;
@@ -157,6 +224,18 @@ const transformTMDBMovie = (tmdbMovie: TMDBMovie): Movie => ({
   vote_count: tmdbMovie.vote_count,
   genre_ids: tmdbMovie.genre_ids,
 });
+
+// Fetch movie videos (trailers, teasers, etc.)
+export const getMovieVideos = async (movieId: number): Promise<TMDBVideos> => {
+  try {
+    const url = createApiUrl(`/movie/${movieId}/videos`);
+    const response = await fetchWithErrorHandling<TMDBVideos>(url);
+    return response;
+  } catch (error) {
+    console.error('Error fetching movie videos:', error);
+    throw error;
+  }
+};
 
 // API Functions
 export const tmdbApi = {
@@ -283,4 +362,53 @@ export const tmdbApi = {
       throw error;
     }
   },
+
+  getMovieDetails: async (movieId: number): Promise<MovieDetails> => {
+    try {
+      // 1. create the URL to append_to_response parameter
+      const url = createApiUrl(`/movie/${movieId}`, {
+        append_to_response: 'credits,videos',
+      });
+
+      // 2. fetch the details movie data
+      const response = await fetchWithErrorHandling<TMDBMovieDetails>(url);
+
+      // 3. transform genres 
+      const genres: Genre[] = response.genres?.map((g: TMDBGenre) => ({
+        id: g.id,
+        name: g.name,
+      })) || [];
+
+      // 4. Return the transformed data 
+      return {
+        ...transformTMDBMovie(response),
+        genres,
+        runtime: response.runtime || 0,
+        budget: response.budget || 0,
+        revenue: response.revenue || 0,
+        production_companies: response.production_companies || [],
+        credits: {
+          cast: (response.credits?.cast || []).slice(0, 20).map((actor: TMDBCastMember) => ({
+            name: actor.name,
+            character: actor.character,
+            profile_path: actor.profile_path,
+          })),
+          crew: (response.credits?.crew || []).filter((member: TMDBCrewMember) => 
+            member.job === 'Director' || member.job === 'Producer' || member.job === 'Writer'
+          ).slice(0, 10).map((member: TMDBCrewMember) => ({
+            id: member.id,
+            name: member.name,
+            job: member.job,
+            department: member.department,
+          })),
+        },
+        videos: {
+          results: response.videos?.results || [],
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+      throw error;
+    }
+  }
 };
