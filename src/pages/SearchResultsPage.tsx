@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearch } from '@tanstack/react-router'
 import {Search, Filter, ArrowLeft, Loader2} from 'lucide-react'
 import Header from '../assets/Components/Header'
 import MovieCard from '../assets/Components/MovieCard'
-import { useMovieSearch} from '../hooks/useNetflixQueries'
+import { useMovieSearchInfinite, useGenres } from '../hooks/useNetflixQuery'
 import type { Movie} from '../assets/Components/types'
 import { useInView } from 'react-intersection-observer'
 
@@ -15,7 +15,7 @@ const SearchResultsPage = () => {
     const query = (searchParams as any)?.q || ''
 
     // State for filters  
-    const [selectedGenre, setSelectedGenre] = useState<string>('all')
+    const [selectedGenre, setSelectedGenre] = useState<number | 'all'>('all')
     const [selectedYear, setSelectedYear] = useState<string>('all')
     const [showTopTen, setShowTopTen] = useState<boolean>(false)
     const yearOptions= ['all', '2024', '2023', '2022', '2020']
@@ -29,8 +29,7 @@ const SearchResultsPage = () => {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-        error
-    } = useMovieSearch(query, query.length >= 3)
+    } = useMovieSearchInfinite(query, query.length >= 3)
 
     // Intersection observer for infinite scroll
     const { ref, inView } = useInView({
@@ -39,10 +38,9 @@ const SearchResultsPage = () => {
     })
 
     // Get all movies from pages
-    const allMovies: Movie[] = data?.pages?.flatMap(page => page.movies) || []
+    const allMovies: Movie[] = data?.pages.flatMap(page => page.movies) ?? []
     
-    // Available genres
-    const genres = ['all', 'action', 'comedy', 'drama', 'thriller', 'sci-fi']
+    const { data: genres = [] } = useGenres()
 
 //  State for filtered movies
 
@@ -53,20 +51,8 @@ useEffect(() => {
     let filtered = allMovies
 
     // Apply genre filter
-    if (selectedGenre !== 'all') { 
-        filtered = filtered.filter(movie => { 
-            const title = movie.title.toLowerCase()
-            switch (selectedGenre) {
-                case 'action': 
-                    return title.includes('action') || title.includes('fighter') || title.includes('war')
-                case 'sci-fi':
-                    return title.includes('sci-fi') || title.includes('space') || title.includes('alien')
-                case 'drama':
-                    return title.includes('drama') || title.includes('love') || title.includes('life')
-                default:
-                    return true
-            }
-        })
+    if (selectedGenre !== 'all') {
+        filtered = filtered.filter(movie => movie.genre_ids?.includes(selectedGenre))
     }
 
     // Apply year filter
@@ -141,17 +127,27 @@ useEffect(() => {
                         <span className="text-gray-300 font-medium">Filter by Genre:</span>
                     </div>
 
+                    <button
+                        onClick={() => setSelectedGenre('all')}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                            selectedGenre === 'all'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                    >
+                        All
+                    </button>
                     {genres.map(genre => (
                         <button
-                            key={genre}
-                            onClick={() => setSelectedGenre(genre)}
+                            key={genre.id}
+                            onClick={() => setSelectedGenre(genre.id)}
                             className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-                                selectedGenre === genre
+                                selectedGenre === genre.id
                                     ? 'bg-red-600 text-white'
                                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                             }`}
                         >
-                            {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                            {genre.name}
                         </button>
                     ))}
                 </div>
@@ -205,8 +201,10 @@ useEffect(() => {
                 </div>
                 {/* Loading State */}
                 {isLoading && (
-                    <div className="flex justify-center py-16">
-                        <Loader2 className="animate-spin text-red-600" size={48} />
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 mt-8">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="aspect-2/3 animate-pulse bg-gray-800 rounded-md" />
+                        ))}
                     </div>
                 )}
 

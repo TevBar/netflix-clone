@@ -352,13 +352,29 @@ export const tmdbApi = {
     try {
       const url = createApiUrl('/movie/top_rated', { page });
       const response = await fetchWithErrorHandling<TMDBResponse<TMDBMovie>>(url);
-      
+
       return {
         movies: response.results.map(transformTMDBMovie),
         totalPages: response.total_pages,
       };
     } catch (error) {
       console.error('Error fetching top rated movies:', error);
+      throw error;
+    }
+  },
+
+  // Fetch movies similar to a given movie
+  getSimilarMovies: async (movieId: number, page: number = 1): Promise<{ movies: Movie[]; totalPages: number }> => {
+    try {
+      const url = createApiUrl(`/movie/${movieId}/similar`, { page });
+      const response = await fetchWithErrorHandling<TMDBResponse<TMDBMovie>>(url);
+
+      return {
+        movies: response.results.map(transformTMDBMovie),
+        totalPages: response.total_pages,
+      };
+    } catch (error) {
+      console.error('Error fetching similar movies:', error);
       throw error;
     }
   },

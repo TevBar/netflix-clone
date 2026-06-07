@@ -9,14 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GenreIdRouteImport } from './routes/genre.$id'
+import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as MyListRouteImport } from './routes/my-list'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
 
+const GenreIdRoute = GenreIdRouteImport.update({
+  id: '/genre/$id',
+  path: '/genre/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
@@ -42,6 +55,11 @@ const FavoritesRoute = FavoritesRouteImport.update({
   path: '/favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyListRoute = MyListRouteImport.update({
+  id: '/my-list',
+  path: '/my-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,7 +73,10 @@ const MovieIdRoute = MovieIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/genre/$id': typeof GenreIdRoute
   '/favorites': typeof FavoritesRoute
+  '/my-list': typeof MyListRoute
   '/search': typeof SearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -64,7 +85,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/genre/$id': typeof GenreIdRoute
   '/favorites': typeof FavoritesRoute
+  '/my-list': typeof MyListRoute
   '/search': typeof SearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -74,7 +98,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
+  '/genre/$id': typeof GenreIdRoute
   '/favorites': typeof FavoritesRoute
+  '/my-list': typeof MyListRoute
   '/search': typeof SearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -85,7 +112,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/browse'
+    | '/genre/$id'
     | '/favorites'
+    | '/my-list'
     | '/search'
     | '/sign-in'
     | '/sign-up'
@@ -94,7 +124,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/browse'
+    | '/genre/$id'
     | '/favorites'
+    | '/my-list'
     | '/search'
     | '/sign-in'
     | '/sign-up'
@@ -103,7 +136,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/browse'
+    | '/genre/$id'
     | '/favorites'
+    | '/my-list'
     | '/search'
     | '/sign-in'
     | '/sign-up'
@@ -113,12 +149,15 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BrowseRoute: typeof BrowseRoute
   FavoritesRoute: typeof FavoritesRoute
+  MyListRoute: typeof MyListRoute
   SearchRoute: typeof SearchRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   WatchlistRoute: typeof WatchlistRoute
   MovieIdRoute: typeof MovieIdRoute
+  GenreIdRoute: typeof GenreIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,11 +197,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-list': {
+      id: '/my-list'
+      path: '/my-list'
+      fullPath: '/my-list'
+      preLoaderRoute: typeof MyListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/movie/$id': {
@@ -172,17 +225,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MovieIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/genre/$id': {
+      id: '/genre/$id'
+      path: '/genre/$id'
+      fullPath: '/genre/$id'
+      preLoaderRoute: typeof GenreIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BrowseRoute: BrowseRoute,
   FavoritesRoute: FavoritesRoute,
+  MyListRoute: MyListRoute,
   SearchRoute: SearchRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   WatchlistRoute: WatchlistRoute,
   MovieIdRoute: MovieIdRoute,
+  GenreIdRoute: GenreIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

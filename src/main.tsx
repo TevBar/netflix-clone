@@ -11,8 +11,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
 
-// Import Mock authentication (temporary replacement for Clerk)
-import { MockAuthProvider } from './contexts/MockAuthContext'
+import { ClerkProvider } from '@clerk/react'
 
 // Create a new router instance
 const router = createRouter({ routeTree })
@@ -27,10 +26,10 @@ declare module '@tanstack/react-router' {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MockAuthProvider>
+      <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
         <RouterProvider router={router} />
         <ReactQueryDevtools initialIsOpen={false} />
-      </MockAuthProvider>
+      </ClerkProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

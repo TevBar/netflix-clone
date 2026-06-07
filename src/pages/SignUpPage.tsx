@@ -8,7 +8,7 @@ const SignUpPage = () => {
           path="/sign-up"
           routing="path"
           signInUrl="/sign-in"
-          redirectUrl="/"
+          forceRedirectUrl="/"
           appearance={{
             baseTheme: "dark",
             variables: {

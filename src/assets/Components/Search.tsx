@@ -182,32 +182,28 @@ const Search = () => {
           role="listbox"
           aria-label="Search results"
         >
-          {searchResults.map((movie) => (
-            <div 
-              key={movie.id} 
+          {searchResults.map((movie) => {
+            const handleSelectMovie = () => {
+              addSearch(movie.title);
+              setRecentSearches(getRecentSearches());
+              navigate({ to: '/movie/$id', params: { id: String(movie.id) } });
+              setIsSearchOpen(false);
+              setSearchTerm('');
+              setSearchResults([]);
+            };
+
+            return (
+            <div
+              key={movie.id}
               className="flex items-center gap-3 p-3 hover:bg-gray-800/50 cursor-pointer border-b border-gray-700/50 last:border-b-0 transition-colors"
-              onClick={() => {
-                // Navigate to search results page with the movie title as query
-                addSearch(movie.title);
-                setRecentSearches(getRecentSearches());
-                navigate({ 
-                    to: '/search', 
-                    search: { q: movie.title } 
-                });
-                setIsSearchOpen(false);
-                setSearchTerm('');
-                setSearchResults([]);
-                }}
+              onClick={handleSelectMovie}
               role="option"
               tabIndex={0}
               aria-selected="false"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  console.log('Selected movie:', movie.title);
-                  setIsSearchOpen(false);
-                  setSearchTerm('');
-                  setSearchResults([]);
+                  handleSelectMovie();
                 }
               }}
             >
@@ -227,7 +223,8 @@ const Search = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
       

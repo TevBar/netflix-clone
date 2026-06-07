@@ -1,21 +1,18 @@
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { ArrowLeft , Heart, Bookmark } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Plus, Check, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { toast } from 'sonner'
 import Header from '../assets/Components/Header'
-import { useMovieDetails } from '../hooks/useMovieDetails'  
+import MovieCard from '../assets/Components/MovieCard'
+import { useMovieDetails } from '../hooks/useMovieDetails'
+import { useSimilarMovies } from '../hooks/useNetflixQuery'
 import { useMovieStore } from '../stores/movieStore'
-import { Play, X } from 'lucide-react';  // Add Play and X icons
+import { useWatchProgressStore } from '../stores/watchProgressStore'
+import { useRatingStore } from '../stores/ratingStore'
+import { Play, X } from 'lucide-react';
 import { useMovieVideos } from '../hooks/useMovieVideos';
 
-// TMDB configuration
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p'
-const BACKDROP_SIZE = 'w1280'
-const POSTER_SIZE = 'w500'
-
-function getImageUrl(path: string | null, size: string): string | null {
-  if (!path) return null
-  return `${TMDB_IMAGE_BASE_URL}/${size}${path}`
-}
 
 const MovieDetails = () => {
   const { id } = useParams({ from: '/movie/$id' })
@@ -36,13 +33,10 @@ const MovieDetails = () => {
   const [iframeHeight, setIframeHeight] = useState(getIframeHeight())
 
 
-  // Zustand store for favorites and watchlist
-  const { 
-    toggleFavorite,
-    toggleWatchlist,
-    isFavorite,
-    isInWatchlist
-  } = useMovieStore()
+  const { toggleMyList, isInMyList } = useMovieStore()
+  const { startWatching, updateProgress } = useWatchProgressStore()
+  const setRating = useRatingStore(state => state.setRating)
+  const getRating = useRatingStore(state => state.getRating)
 
 
   const handleBackClick = () => {
@@ -51,6 +45,7 @@ const MovieDetails = () => {
 
   const { data: movie, isLoading, error } = useMovieDetails(parseInt(id));
   const { data: videos } = useMovieVideos(parseInt(id));
+  const { data: similarData } = useSimilarMovies(parseInt(id));
 
   // Find all YouTube videos (trailers, clips, teasers)
   const youtubeVideos = videos?.results?.filter(
@@ -77,19 +72,35 @@ const MovieDetails = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ESC key handler to close modal (STEP 1)
+  // Record this movie as "started" the moment its data arrives
+  useEffect(() => {
+    if (!movie) return
+    startWatching({
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      backdrop_path: movie.backdrop_path,
+      overview: movie.overview,
+      vote_average: movie.vote_average,
+      release_date: movie.release_date,
+    })
+  }, [movie?.id])
+
+  // ESC key + body scroll lock for video modal
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showVideoModal) {
+      if (event.key === 'Escape') {
         setShowVideoModal(false);
       }
     };
 
     if (showVideoModal) {
+      document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleEscapeKey);
     }
 
     return () => {
+      document.body.style.overflow = '';
       window.removeEventListener('keydown', handleEscapeKey);
     };
   }, [showVideoModal]);
@@ -100,12 +111,19 @@ const MovieDetails = () => {
       <div className="min-h-screen bg-black text-white">
         {/* Loading State */}
         {isLoading && (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="inline-block">
-                <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="animate-pulse">
+            <div className="w-full h-[50vh] bg-gray-800" />
+            <div className="p-8 mt-8 flex flex-col lg:flex-row gap-8">
+              <div className="shrink-0 w-64 sm:w-72 lg:w-80 h-120 bg-gray-800 rounded-lg" />
+              <div className="flex-1 flex flex-col justify-center gap-4">
+                <div className="h-10 bg-gray-800 rounded w-2/3" />
+                <div className="h-6 bg-gray-800 rounded w-1/3" />
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-800 rounded w-full" />
+                  <div className="h-4 bg-gray-800 rounded w-5/6" />
+                  <div className="h-4 bg-gray-800 rounded w-4/6" />
+                </div>
               </div>
-              <p className="text-gray-400 text-lg">Loading movie details...</p>
             </div>
           </div>
         )}
@@ -136,12 +154,10 @@ const MovieDetails = () => {
             {movie.backdrop_path && (
             <div className="absolute inset-0">
                 {backdropLoading && (
-                <div className="absolute inset-0 bg-gray-900 animate-pulse flex items-center justify-center">
-                    <div className="text-gray-400">Loading backdrop...</div>
-                </div>
+                <div className="absolute inset-0 bg-gray-900 animate-pulse" />
                 )}
-                <img 
-                src={getImageUrl(movie.backdrop_path, BACKDROP_SIZE) || ''}
+                <img
+                src={movie.backdrop_path || ''}
                 alt={`${movie.title} backdrop`}
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
                     backdropLoading ? 'opacity-0' : 'opacity-100'
@@ -172,12 +188,10 @@ const MovieDetails = () => {
                   {/* Movie Poster */}
                   <div className="shrink-0 relative w-full lg:w-auto flex justify-center lg:justify-start">
                     {posterLoading && (
-                      <div className="absolute inset-0 w-80 h-120 bg-gray-800 animate-pulse rounded-lg flex items-center justify-center">
-                        <div className="text-gray-400 text-sm">Loading poster...</div>
-                      </div>
+                      <div className="absolute inset-0 w-80 h-120 bg-gray-800 animate-pulse rounded-lg" />
                     )}
                     <img
-                      src={posterError ? '/placeholder-poster.jpg' : getImageUrl(movie.poster_path, POSTER_SIZE) || '/placeholder-poster.jpg'}
+                      src={posterError ? '/placeholder-poster.jpg' : (movie.poster_path || '/placeholder-poster.jpg')}
                     alt={movie.title}
                     className={`w-64 sm:w-72 lg:w-80 rounded-lg shadow-2xl transition-opacity duration-300 ${
                         posterLoading ? 'opacity-0' : 'opacity-100'
@@ -193,55 +207,116 @@ const MovieDetails = () => {
                   
                   {/* Movie Info */}
                   <div className="flex-1 flex flex-col justify-center">
-                    {/* Title, Rating, Release Date */}
+                    {/* Title */}
                     <h1 className="text-5xl font-bold mb-4">{movie.title}</h1>
-                    <div className="flex items-center gap-6 mb-6">
-                      <span className="text-yellow-400 text-xl font-semibold">★ {movie.vote_average}/10</span>
-                      <span className="text-gray-400">{movie.release_date}</span>
+
+                    {/* Rating + Year + Runtime */}
+                    <div className="flex items-center gap-6 mb-3">
+                      <span className="text-yellow-400 text-xl font-semibold">
+                        ★ {movie.vote_average.toFixed(1)}/10
+                      </span>
+                      <span className="text-gray-400">
+                        {movie.release_date?.split('-')[0] ?? 'Unknown'}
+                      </span>
+                      {movie.runtime > 0 && (
+                        <span className="text-gray-400">
+                          {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
+                        </span>
+                      )}
                     </div>
+
+                    {/* Genres */}
+                    {movie.genres?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {movie.genres.map((genre) => (
+                          <button
+                            key={genre.id}
+                            onClick={() => navigate({ to: '/genre/$id', params: { id: String(genre.id) } })}
+                            className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-full text-sm text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors cursor-pointer"
+                          >
+                            {genre.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Overview */}
                     <p className="text-gray-300 leading-relaxed max-w-2xl mb-8 text-base">{movie.overview}</p>
 
                     {/* Action Buttons */}
                     <div className="flex gap-4">
-                      {/* Favorites Button */}
+                      {/* My List Button */}
                       <button
-                        onClick={() => toggleFavorite(movie)}
+                        onClick={() => {
+                          const wasInList = isInMyList(movie.id)
+                          toggleMyList(movie)
+                          toast.success(
+                            wasInList
+                              ? `Removed from My List`
+                              : `${movie.title} added to My List!`
+                          )
+                        }}
                         className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
-                          isFavorite(movie.id)
+                          isInMyList(movie.id)
                             ? 'bg-red-600 hover:bg-red-700 text-white'
                             : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                         }`}
                       >
-                        <Heart 
-                          size={20} 
-                          className={isFavorite(movie.id) ? 'fill-current' : ''} 
-                        />
-                        {isFavorite(movie.id) ? 'Favorited' : 'Favorite'}
+                        <motion.div
+                          whileTap={{ scale: 1.4 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                        >
+                          {isInMyList(movie.id)
+                            ? <Check size={20} />
+                            : <Plus size={20} />}
+                        </motion.div>
+                        {isInMyList(movie.id) ? 'In My List' : '+ My List'}
                       </button>
 
-                      {/* Watchlist Button */}
-                      <button
-                        onClick={() => toggleWatchlist(movie)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
-                          isInWatchlist(movie.id)
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                        }`}
-                      >
-                        <Bookmark 
-                          size={20} 
-                          className={isInWatchlist(movie.id) ? 'fill-current' : ''} 
-                        />
-                        {isInWatchlist(movie.id) ? 'Saved' : 'Save'}
-                      </button>
+                      {/* Rating Buttons */}
+                      {movie && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const prev = getRating(movie.id)
+                              setRating(movie.id, 'up')
+                              toast.success(prev === 'up' ? 'Rating removed' : 'Rated thumbs up!')
+                            }}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
+                              getRating(movie.id) === 'up'
+                                ? 'bg-green-600 hover:bg-green-700 text-white'
+                                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                            }`}
+                            title="Thumbs up"
+                          >
+                            <ThumbsUp size={20} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const prev = getRating(movie.id)
+                              setRating(movie.id, 'down')
+                              toast.success(prev === 'down' ? 'Rating removed' : 'Rated thumbs down')
+                            }}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${
+                              getRating(movie.id) === 'down'
+                                ? 'bg-gray-500 hover:bg-gray-400 text-white'
+                                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                            }`}
+                            title="Thumbs down"
+                          >
+                            <ThumbsDown size={20} />
+                          </button>
+                        </>
+                      )}
 
                       {/* Trailer Button with Dropdown (STEP 3) */}
                       {youtubeVideos.length > 0 && (
                         <div className="relative group">
                           <button
-                            onClick={() => setShowVideoModal(true)}
+                            onClick={() => {
+                              setShowVideoModal(true)
+                              updateProgress(movie.id, 5)
+                            }}
                             className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 bg-yellow-600 hover:bg-yellow-700 text-white"
                           >
                             <Play size={20} />
@@ -271,8 +346,65 @@ const MovieDetails = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Director */}
+                    {movie.credits?.crew?.find(m => m.job === 'Director') && (
+                      <p className="mt-6 text-sm text-gray-400">
+                        Directed by{' '}
+                        <span className="text-white font-medium">
+                          {movie.credits.crew.find(m => m.job === 'Director')?.name}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 </div>
+
+                {/* Cast Section */}
+                {movie.credits?.cast?.length > 0 && (
+                  <div className="mt-12">
+                    <h2 className="text-2xl font-bold text-white mb-6">Cast</h2>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                      {movie.credits.cast.slice(0, 12).map((actor) => (
+                        <div key={actor.name} className="shrink-0 w-28 text-center">
+                          <div className="w-28 h-36 rounded-lg overflow-hidden bg-gray-800 mb-2">
+                            {actor.profile_path ? (
+                              <img
+                                src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                                alt={actor.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-600 text-3xl">
+                                ?
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-white text-xs font-medium leading-tight">{actor.name}</p>
+                          <p className="text-gray-400 text-xs mt-0.5 leading-tight truncate" title={actor.character}>
+                            {actor.character}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* More Like This */}
+                {(similarData?.movies?.length ?? 0) > 0 && (
+                  <div className="mt-12">
+                    <h2 className="text-2xl font-bold text-white mb-6">More Like This</h2>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                      {similarData!.movies.slice(0, 12).map((similarMovie) => (
+                        <div key={similarMovie.id} className="shrink-0">
+                          <MovieCard movie={similarMovie} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -307,7 +439,7 @@ const MovieDetails = () => {
               {selectedVideo && (
                 <iframe
                   width="100%"
-                  height="600"
+                  height={iframeHeight}
                   src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=1`}
                   title={selectedVideo.name}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

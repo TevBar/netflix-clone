@@ -2,7 +2,6 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { tmdbApi } from '../services/tmdbApi'
 import type { Movie } from '../assets/Components/types'
 
-// Query keys for consistent caching
 export const queryKeys = {
   movies: {
     all: ['movies'] as const,
@@ -18,17 +17,15 @@ export const queryKeys = {
   },
 } as const
 
-// 🚀 NETFLIX-LEVEL PERFORMANCE: Trending movies with caching
 export function useTrendingMovies(timeWindow: 'day' | 'week' = 'week') {
   return useQuery({
     queryKey: queryKeys.movies.trending(timeWindow),
     queryFn: () => tmdbApi.getTrending(timeWindow),
-    staleTime: 5 * 60 * 1000, // Fresh for 5 minutes
-    gcTime: 10 * 60 * 1000,   // Cache for 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }
 
-// 🚀 INFINITE SCROLL: Popular movies (Netflix-style browsing)
 export function usePopularMoviesInfinite() {
   return useInfiniteQuery({
     queryKey: queryKeys.movies.popular,
@@ -42,64 +39,120 @@ export function usePopularMoviesInfinite() {
   })
 }
 
-// 🚀 INSTANT SEARCH: Search with debounced queries
+export function useInfiniteMovies(category: 'popular' | 'top_rated' | 'now_playing' = 'popular') {
+  return useInfiniteQuery({
+    queryKey: ['movies', category, 'infinite'],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }: { pageParam: number }) => {
+      switch (category) {
+        case 'popular': return tmdbApi.getPopular(pageParam)
+        case 'top_rated': return tmdbApi.getTopRated(pageParam)
+        case 'now_playing': return tmdbApi.getNowPlaying(pageParam)
+        default: return tmdbApi.getPopular(pageParam)
+      }
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const currentPage = allPages.length
+      const totalPages = lastPage.totalPages || 20
+      return currentPage < totalPages ? currentPage + 1 : undefined
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
 export function useMovieSearch(query: string, enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.movies.search(query),
     queryFn: () => tmdbApi.searchMovies(query),
-    enabled: enabled && query.length > 2, // Only search if query is meaningful
-    staleTime: 2 * 60 * 1000, // Search results cache for 2 minutes
+    enabled: enabled && query.length > 2,
+    staleTime: 2 * 60 * 1000,
   })
 }
 
-// 🚀 BACKGROUND SYNC: Now playing movies
+export function useMovieSearchInfinite(query: string, enabled: boolean = true) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.movies.search(query), 'infinite'],
+    queryFn: ({ pageParam }: { pageParam: number }) => tmdbApi.searchMovies(query, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPageParam < lastPage.totalPages ? lastPageParam + 1 : undefined,
+    enabled: enabled && query.length > 2,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
 export function useNowPlayingMovies() {
   return useQuery({
     queryKey: queryKeys.movies.nowPlaying,
     queryFn: () => tmdbApi.getNowPlaying(),
-    refetchInterval: 10 * 60 * 1000, // Auto-refresh every 10 minutes
+    refetchInterval: 10 * 60 * 1000,
     staleTime: 5 * 60 * 1000,
   })
 }
 
-// 🚀 TOP RATED: Cached top rated movies
 export function useTopRatedMovies() {
   return useQuery({
     queryKey: queryKeys.movies.topRated,
     queryFn: () => tmdbApi.getTopRated(),
-    staleTime: 30 * 60 * 1000, // Top rated changes slowly, cache longer
-    gcTime: 60 * 60 * 1000,    // Keep in memory for 1 hour
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   })
 }
 
-// 🚀 CACHED GENRES: Load once, use everywhere
+export function useSimilarMovies(movieId: number) {
+  return useQuery({
+    queryKey: ['movies', 'similar', movieId],
+    queryFn: () => tmdbApi.getSimilarMovies(movieId),
+    staleTime: 10 * 60 * 1000,
+    enabled: !!movieId && movieId > 0,
+  })
+}
+
+export function useMoviesByGenre(genreId: number, page: number = 1) {
+  return useQuery({
+    queryKey: ['movies', 'by-genre', genreId, page],
+    queryFn: () => tmdbApi.getMoviesByGenre(genreId, page),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    enabled: !!genreId && genreId > 0,
+  })
+}
+
+export function useMoviesByGenreInfinite(genreId: number) {
+  return useInfiniteQuery({
+    queryKey: ['movies', 'by-genre', genreId, 'infinite'],
+    queryFn: ({ pageParam }: { pageParam: number }) => tmdbApi.getMoviesByGenre(genreId, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const nextPage = allPages.length + 1
+      return nextPage <= lastPage.totalPages ? nextPage : undefined
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    enabled: genreId > 0,
+  })
+}
+
 export function useGenres() {
   return useQuery({
     queryKey: queryKeys.genres.all,
     queryFn: () => tmdbApi.getGenres(),
-    staleTime: 60 * 60 * 1000, // Genres rarely change, cache for 1 hour
-    gcTime: 2 * 60 * 60 * 1000, // Keep in memory for 2 hours
+    staleTime: 60 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
   })
 }
 
-// 🚀 OPTIMISTIC UPDATES: User favorites (Netflix responsiveness)
 export function useFavoritesMutation() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async ({ movie, action }: { movie: Movie, action: 'add' | 'remove' }) => {
-      // Simulate API call (replace with real endpoint when available)
       await new Promise(resolve => setTimeout(resolve, 500))
       return { movie, action }
     },
     onMutate: async ({ movie, action }) => {
-      // Cancel outgoing refetches (prevents race conditions)
       await queryClient.cancelQueries({ queryKey: ['user', 'favorites'] })
-      
-      // Snapshot previous value for rollback
       const previousFavorites = queryClient.getQueryData(['user', 'favorites'])
-      
-      // Optimistically update favorites list
       queryClient.setQueryData(['user', 'favorites'], (old: Movie[] = []) => {
         if (action === 'add') {
           return old.find(m => m.id === movie.id) ? old : [...old, movie]
@@ -107,26 +160,22 @@ export function useFavoritesMutation() {
           return old.filter(m => m.id !== movie.id)
         }
       })
-      
       return { previousFavorites }
     },
     onError: (_err, _variables, context) => {
-      // Rollback on error
       if (context?.previousFavorites) {
         queryClient.setQueryData(['user', 'favorites'], context.previousFavorites)
       }
     },
     onSettled: () => {
-      // Always refetch after mutation
       queryClient.invalidateQueries({ queryKey: ['user', 'favorites'] })
     },
   })
 }
 
-// 🚀 PREFETCH STRATEGY: Preload movie data on hover (Netflix-style)
 export function usePrefetchMovies() {
   const queryClient = useQueryClient()
-  
+
   return {
     prefetchTrending: (timeWindow: 'day' | 'week' = 'week') => {
       queryClient.prefetchQuery({

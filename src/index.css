@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,900&display=swap');
 
 @import "tailwindcss/preflight";
 @import "tailwindcss";
@@ -7,7 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -107,6 +108,7 @@ button:focus-visible {
 }
 
 @theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -197,10 +199,7 @@ button:focus-visible {
     visibility: visible !important;
     opacity: 1 !important;
   }
-  .hero-component * {
-    color: inherit !important;
-  }
-  .hero-component img {
+.hero-component img {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;

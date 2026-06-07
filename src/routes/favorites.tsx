@@ -1,20 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import FavoritesPage from '../pages/FavoritesPage'
-import { ProtectedRoute } from '../assets/Components/ProtectedRoute'
-
-// create wrapper component that combines protection + page 
-
-function ProtectedFavorites() {
-    return (
-        <ProtectedRoute>
-            <FavoritesPage />
-        </ProtectedRoute>
-    )
-}
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/favorites')({
-    component: ProtectedFavorites
+    beforeLoad: () => { throw redirect({ to: '/my-list' }) }
 })
-
-// Bottom line: TanStack eliminates tons of boilerplate code for data fetching, caching, synchronization, and state management.
-//  Your code becomes cleaner, more maintainable, and your app feels faster because of smart caching.
